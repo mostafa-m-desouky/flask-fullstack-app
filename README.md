@@ -10,7 +10,7 @@ This project is a comprehensive implementation of modern web development best pr
 
 During development, I focused on solving real-world engineering problems:
 
-* **🛡️ Professional Security (Environment Variables):** To follow industry standards, I decoupled sensitive data (Secret Keys, Database URIs) from the source code using \`python-dotenv\`. This ensures that private credentials are never exposed in the version control history.
+* **🛡️ Professional Security (Environment Variables):** To follow industry standards, I decoupled sensitive data (Secret Keys, Database URIs) from the source code using `python-dotenv`. This ensures that private credentials are never exposed in the version control history.
 * **🖼️ Media Optimization:** I integrated the **Pillow (PIL)** library to handle profile picture uploads. The system automatically resizes images to save server storage and improve page load performance.
 * **🏗️ Scalable Architecture:** By using **Flask Blueprints**, I organized the application into logical modules (Auth, Main). This separation of concerns makes the codebase maintainable and easy to extend.
 
@@ -18,8 +18,8 @@ During development, I focused on solving real-world engineering problems:
 
 ## ✨ Key Features
 
-* **🔐 Secure Authentication:** Complete User Sign-up and Login system managed by \`Flask-Login\`.
-* **🔑 Advanced Hashing:** Passwords are securely hashed using the \`Scrypt\` algorithm via \`Werkzeug.security\`.
+* **🔐 Secure Authentication:** Complete User Sign-up and Login system managed by `Flask-Login`.
+* **🔑 Advanced Hashing:** Passwords are securely hashed using the `Scrypt` algorithm via `Werkzeug.security`.
 * **👤 User Profiles:** Fully functional profile management where users can update their information and avatars.
 * **✍️ Post Management (CRUD):** Authenticated users can Create, Read, Update, and Delete blog posts with strict ownership protection.
 * **📱 Responsive Design:** A clean and modern user interface built with **Bootstrap 5**.
@@ -40,39 +40,39 @@ During development, I focused on solving real-world engineering problems:
 To run this project on your local machine:
 
 1. **Clone the repository:**
-   \`\`\`bash
+   ```bash
    git clone https://github.com/mostafa-m-desouky/flask-fullstack-app.git
    cd flask-fullstack-app
-   \`\`\`
+   ```
 
 2. **Create and activate a virtual environment:**
-   \`\`\`bash
+   ```bash
    python -m venv venv
    # Windows:
-   venv\\Scripts\\activate
-   \`\`\`
+   venv\Scripts\activate
+   ```
 
 3. **Install dependencies:**
-   \`\`\`bash
+   ```bash
    pip install -r requirements.txt
-   \`\`\`
+   ```
 
 4. **Set up Environment Variables:**
-   Create a \`.env\` file in the root directory:
-   \`\`\`text
+   Create a `.env` file in the root directory:
+   ```text
    SECRET_KEY=your_secret_key_here
    DATABASE_URL=sqlite:///instance/site.db
-   \`\`\`
+   ```
 
 5. **Run the application:**
-   \`\`\`bash
+   ```bash
    python run.py
-   \`\`\`
+   ```
 
 ---
 
 ## 📂 Project Structure
-\`\`\`text
+```text
 ├── app/
 │   ├── blueprints/    # Modular logic for Auth and Main features
 │   ├── static/        # CSS, JavaScript, and User Uploads
@@ -82,10 +82,9 @@ To run this project on your local machine:
 ├── instance/          # Local Database storage (Git-ignored)
 ├── .env               # Private Configuration (Git-ignored)
 └── run.py             # Server entry point
-\`\`\`
+```
 
 ---
 
 ## 👨‍💻 Contribution
 Feedback and contributions are welcome! Feel free to fork the repository or submit a pull request if you have ideas for improvements.
-EOF
