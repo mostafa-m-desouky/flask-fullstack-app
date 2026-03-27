@@ -10,20 +10,16 @@ from PIL import Image
 auth = Blueprint('auth', __name__)
 
 def save_picture(form_picture):
-    # 1. توليد اسم عشوائي للصورة عشان مفيش صورتين يخبطوا في بعض
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
     
-    # 2. تحديد المسار اللي هنحفظ فيه الصورة
     picture_path = os.path.join(current_app.root_path, 'static/profile_pics', picture_fn)
 
-    # 3. تصغير الصورة (عشان السيرفر ميتمليش مساحة عالفاضي)
     output_size = (125, 125)
     i = Image.open(form_picture)
     i.thumbnail(output_size)
     
-    # 4. حفظ الصورة في الفولدر
     i.save(picture_path)
 
     return picture_fn
@@ -63,12 +59,9 @@ def login():
         email = request.form.get('email').strip() 
         password = request.form.get('password').strip()
 
-        # Check If User exists
         user = User.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password, password):
-            # دالة login_user بتاخد كائن المستخدم اللي لقيناه
-            # وبكده السيرفر "بيفتكره" في كل الصفحات الجاية
             login_user(user, remember=True)
             return redirect(url_for('main.home'))
         else:
@@ -80,35 +73,47 @@ def login():
 
 @auth.route('/logout', methods=['GET', 'POST'])
 def logout():
-    logout_user() # دي بتمسح "كارت الدخول" من المتصفح
+    logout_user() 
     return redirect(url_for('main.home'))
 
-@auth.route('/account', methods=['GET', 'POST'])
+@auth.route("/account", methods=['GET', 'POST'])
 @login_required
 def account():
     if request.method == 'POST':
-        # 1. تحديث البيانات الأساسية
+
+        if request.files.get('picture'):
+            picture_file = save_picture(request.files['picture'])
+            current_user.image_file = picture_file
+
         current_user.username = request.form.get('username')
         current_user.email = request.form.get('email')
         
-        # 2. تحديث الباسورد (لو اتكتب حاجة جديدة)
-        new_password = request.form.get('password')
-        if new_password:
-            current_user.password = generate_password_hash(new_password, method='scrypt')
+        new_pass = request.form.get('new_password')
+        confirm_pass = request.form.get('confirm_password')
         
-        # 3. معالجة وحفظ الصورة الشخصية
-        if 'picture' in request.files:
-            file = request.files['picture']
-            if file and file.filename != '':
-                picture_file = save_picture(file) # الفانكشن اللي عملناها بـ Pillow
-                current_user.image_file = picture_file
-        
-        # 4. حفظ كل التعديلات في الداتا بيز مرة واحدة
+        if new_pass: 
+            if new_pass == confirm_pass:
+                hashed_password = generate_password_hash(new_pass, method='scrypt')
+                current_user.password = hashed_password
+            else:
+                return redirect(url_for('auth.account'))
+
         db.session.commit()
-        
-        # 5. الرجوع لنفس الصفحة عشان يشوف التعديلات فوراً
         return redirect(url_for('auth.account'))
-    
-    # في حالة الـ GET (لما يفتح الصفحة بس)
+        
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
-    return render_template('account.html', image_file=image_file)
+    return render_template('account.html', title='Account', image_file=image_file)
+
+
+
+@auth.route("/delete_account", methods=['POST'])
+@login_required
+def delete_account():
+    user_to_delete = User.query.get(current_user.id)
+    
+    logout_user()
+    
+    db.session.delete(user_to_delete)
+    db.session.commit()
+    
+    return redirect(url_for('main.home'))
