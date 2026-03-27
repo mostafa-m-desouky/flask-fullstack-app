@@ -1,0 +1,114 @@
+from flask import Blueprint, request, render_template, redirect, url_for, jsonify, current_app
+from app.models import User
+from werkzeug.security import generate_password_hash, check_password_hash
+from app import db
+from flask_login import login_user, logout_user, login_required, current_user
+import os
+import secrets
+from PIL import Image
+
+auth = Blueprint('auth', __name__)
+
+def save_picture(form_picture):
+    # 1. توليد اسم عشوائي للصورة عشان مفيش صورتين يخبطوا في بعض
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = random_hex + f_ext
+    
+    # 2. تحديد المسار اللي هنحفظ فيه الصورة
+    picture_path = os.path.join(current_app.root_path, 'static/profile_pics', picture_fn)
+
+    # 3. تصغير الصورة (عشان السيرفر ميتمليش مساحة عالفاضي)
+    output_size = (125, 125)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    
+    # 4. حفظ الصورة في الفولدر
+    i.save(picture_path)
+
+    return picture_fn
+
+@auth.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username').strip()
+        email = request.form.get('email').strip()
+        password = request.form.get('password').strip()
+        gender = request.form.get('gender').strip()
+
+        if User.query.filter_by(email=email).first():
+            return "This Email Already Exist"
+        
+        if User.query.filter_by(username=username).first():
+            return "This Username Already Exist"
+
+        if gender == 'male':
+            default_image = 'default_male.png'
+        else:
+            default_image = 'default_female.png'
+
+        hashed_pw = generate_password_hash(password, method='scrypt')
+        user = User(username=username, email=email, password=hashed_pw, 
+                    gender=gender, image_file=default_image)
+        
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for('auth.login'))
+    return render_template('register.html')
+
+
+@auth.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email').strip() 
+        password = request.form.get('password').strip()
+
+        # Check If User exists
+        user = User.query.filter_by(email=email).first()
+
+        if user and check_password_hash(user.password, password):
+            # دالة login_user بتاخد كائن المستخدم اللي لقيناه
+            # وبكده السيرفر "بيفتكره" في كل الصفحات الجاية
+            login_user(user, remember=True)
+            return redirect(url_for('main.home'))
+        else:
+            return jsonify({
+            "status": "error",
+            "message": "User Didn't Exists Or Your Password"
+        }), 401
+    return render_template('login.html')
+
+@auth.route('/logout', methods=['GET', 'POST'])
+def logout():
+    logout_user() # دي بتمسح "كارت الدخول" من المتصفح
+    return redirect(url_for('main.home'))
+
+@auth.route('/account', methods=['GET', 'POST'])
+@login_required
+def account():
+    if request.method == 'POST':
+        # 1. تحديث البيانات الأساسية
+        current_user.username = request.form.get('username')
+        current_user.email = request.form.get('email')
+        
+        # 2. تحديث الباسورد (لو اتكتب حاجة جديدة)
+        new_password = request.form.get('password')
+        if new_password:
+            current_user.password = generate_password_hash(new_password, method='scrypt')
+        
+        # 3. معالجة وحفظ الصورة الشخصية
+        if 'picture' in request.files:
+            file = request.files['picture']
+            if file and file.filename != '':
+                picture_file = save_picture(file) # الفانكشن اللي عملناها بـ Pillow
+                current_user.image_file = picture_file
+        
+        # 4. حفظ كل التعديلات في الداتا بيز مرة واحدة
+        db.session.commit()
+        
+        # 5. الرجوع لنفس الصفحة عشان يشوف التعديلات فوراً
+        return redirect(url_for('auth.account'))
+    
+    # في حالة الـ GET (لما يفتح الصفحة بس)
+    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+    return render_template('account.html', image_file=image_file)
