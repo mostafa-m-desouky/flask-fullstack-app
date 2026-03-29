@@ -2,18 +2,38 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 bg-white p-4 shadow-sm rounded">
-        <h3 class="mb-4">{{ 'Update Post' if post else 'New Post' }}</h3>
-        <form method="POST">
+        <h3 class="mb-4 text-secondary">{{ 'Update Post' if post else 'New Post' }}</h3>
+        
+        <form method="POST" enctype="multipart/form-data">
             <div class="mb-3">
                 <label class="form-label fw-bold">Post Title</label>
                 <input type="text" name="title" class="form-control" value="{{ post.title if post else '' }}" required>
             </div>
+
             <div class="mb-3">
                 <label class="form-label fw-bold">Content</label>
                 <textarea name="content" class="form-control" rows="8" required>{{ post.content if post else '' }}</textarea>
             </div>
-            <button type="submit" class="btn btn-success px-5">Save Post</button>
-            <a href="{{ url_for('main.home') }}" class="btn btn-light ms-2">Cancel</a>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Post Image</label>
+                
+                {% if post and post.image_file and post.image_file != 'default_post.jpg' %}
+                    <div class="mb-2">
+                        <small class="text-muted d-block mb-1">Current Image:</small>
+                        <img src="{{ url_for('static', filename='posts_pics/' + post.image_file) }}" 
+                        class="img-fluid rounded shadow-sm">
+                    </div>
+                {% endif %}
+
+                <input type="file" name="post_image" class="form-control">
+                <small class="text-muted">Upload a new image to change the current one.</small>
+            </div>
+
+            <div class="border-top pt-3">
+                <button type="submit" class="btn btn-success px-5">Save Post</button>
+                <a href="{{ url_for('main.home') }}" class="btn btn-light ms-2">Cancel</a>
+            </div>
         </form>
     </div>
 </div>
