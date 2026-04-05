@@ -106,7 +106,7 @@ def account():
 
 
 
-@auth.route("/delete_account", methods=['POST'])
+@auth.route("/delete_account", methods=['DELETE'])
 @login_required
 def delete_account():
     user_to_delete = User.query.get(current_user.id)
